@@ -82,6 +82,18 @@ Param.T_min=200;
 Param.sigma_b=7/10;
 Param.z_D=20.0e3;
 
+% Discretization
+OrdPoly=4;
+OrdPolyZ=1;
+[CG,Param]=Discretization(OrdPoly,OrdPolyZ,@JacobiSphere3,Param);
+LRef=11*1.e5;
+dx=2*pi*Param.RadEarth/4/Param.nPanel/OrdPoly;
+Param.Upwind=false;
+Param.HyperVisc=true;
+Param.HyperDCurl=2.e17; %1.e14*(dx/LRef)^3.2;
+Param.HyperDGrad=2.e17;
+Param.HyperDDiv=2.e17; % Scalars
+
 
 % Output
 Param.Flat=true;
@@ -90,24 +102,18 @@ Param.fig=1;
 Param.vtk=1;
 Param.SliceXY.Type='XY';
 Param.SliceXY.iz=3;
-Param.vtkFileName='HeldSuarezN';
+Param.vtkFileName='HeldSuarez';
 Param.RadPrint=Param.H;
-
-
-% Discretization
-OrdPoly=4;
-OrdPolyZ=1;
-[CG,Param]=Discretization(OrdPoly,OrdPolyZ,@JacobiSphere3,Param);
-LRef=11*1.e5;
-dx=2*pi*Param.RadEarth/4/Param.nPanel/OrdPoly;
-Param.HyperVisc=true;
-Param.HyperDCurl=2.e17; %1.e14*(dx/LRef)^3.2;
-Param.HyperDGrad=2.e17;
-Param.HyperDDiv=2.e17; % Scalars
-
+Param.vtk=0;
+vtkGrid=vtkCGGrid(CG,@TransSphere,@Topo,Param);
+Param.cNames(1).s='Rho';
+Param.cNames(2).s='u';
+Param.cNames(3).s='v';
+Param.cNames(4).s='w';
+Param.cNames(5).s='Th';
+cOut=zeros(CG.NumG,nz,5);
 
 % Initial conditions
-
 U=zeros(CG.NumG,nz,Param.NumV);
 U(:,:,Param.RhoPos)=Project(@fRho,CG,Param);
 [U(:,:,Param.uPos),U(:,:,Param.vPos)]=ProjectVec(@fVel,CG,Param);
@@ -141,9 +147,15 @@ PrintDay=10;
 nIter=24*3600*SimDays/dtau;
 PrintInt=24*3600*PrintDay/dtau;
 % Print initial conditions
-Param.vtk=vtkCG(U(:,:,Param.uPos),CG,@TransSphere,@Topo,Param,Param.vtk);
+cOut(:,:,1)=U(:,:,Param.RhoPos);
+cOut(:,:,2)=U(:,:,Param.uPos);
+cOut(:,:,3)=U(:,:,Param.vPos);
+cOut(:,1,4)=0.5*U(:,1,Param.wPos);
+cOut(:,2:nz-1,4)=0.5*(U(:,1:nz-2,Param.wPos)+U(:,2:nz-1,Param.wPos));
+cOut(:,nz,4)=0.5*U(:,nz-1,Param.wPos);
+cOut(:,:,5)=U(:,:,Param.ThPos)./U(:,:,Param.RhoPos);
+Param.vtk=vtkCG(cOut,CG,Param,vtkGrid,Param.vtk);
 %
-PrintInt=1;
 switch IntMethod
   case 'Rosenbrock'
     tic
@@ -152,7 +164,14 @@ switch IntMethod
       U=RosenbrockSchur(U,dtau,@FcnNHCurlVec,@JacSchur,CG,Param);
       time=time+dtau;
       if mod(i,PrintInt)==0
-        Param.vtk=vtkCG(U(:,:,Param.uPos),CG,@TransSphere,@Topo,Param,Param.vtk);
+        cOut(:,:,1)=U(:,:,Param.RhoPos);
+        cOut(:,:,2)=U(:,:,Param.uPos);
+        cOut(:,:,3)=U(:,:,Param.vPos);
+        cOut(:,1,4)=0.5*U(:,1,Param.wPos);
+        cOut(:,2:nz-1,4)=0.5*(U(:,1:nz-2,Param.wPos)+U(:,2:nz-1,Param.wPos));
+        cOut(:,nz,4)=0.5*U(:,nz-1,Param.wPos);
+        cOut(:,:,5)=U(:,:,Param.ThPos)./U(:,:,Param.RhoPos);
+        Param.vtk=vtkCG(cOut,CG,Param,vtkGrid,Param.vtk);
       end
     end
     toc
