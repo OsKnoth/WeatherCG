@@ -56,11 +56,14 @@ switch lower(Param.ProfRho)
     T=T+Param.DeltaT*exp(-Param.ExpDist*d)*sin(pi*r/Param.H);
     Rho=p/(Param.Rd*T);
   case 'baldaufcart'
-    delta=Param.p0/(Param.Grav*Param.T0);
+    delta=Param.Grav/(Param.Rd*Param.T0);
+    
     p=Param.p0*exp(-delta*x(3));
-    TLoc=Param.T0;
-    TLoc=TLoc+Param.DeltaT*exp(-(x(1)-Param.xc)^2/Param.d^2)*sin(pi*x(3)/Param.H);
-    Rho=p/(Param.Rd*TLoc);  
+    
+    dT=Param.DeltaT*exp(-(x(1)-Param.xc)^2/Param.d^2)*sin(pi*x(3)/Param.H);
+    
+    TLoc=Param.T0+exp(delta/2*x(3))*dT;
+    Rho=p/(Param.Rd*TLoc);
   case 'warmbubble2d'
     Grav=Param.Grav;
     p0=Param.p0;

@@ -1,5 +1,10 @@
 function Th = fThetaBGrd(x,Param)
 switch lower(Param.ProfTheta)
+  case 'baldaufcart'
+    delta=Param.Grav/(Param.Rd*Param.T0);
+    p=Param.p0*exp(-delta*x(3));
+    TLoc=Param.T0;
+    Th=TLoc*(Param.p0/p)^(Param.Rd/Param.Cpd); 
   case 'hyperdiff'
     Th=1;
   case 'barowavecart'

@@ -1,4 +1,4 @@
-function testNHBaldaufCart()
+function testNHInertiaCart()
 close all
 
 % Physical parameters
@@ -38,18 +38,18 @@ end
 
 
 % Model
-Param.ProfRho='BaldaufCart';
-Param.ProfTheta='BaldaufCart';
+Param.ProfRho='InertiaGravityWave';
+Param.ProfTheta='InertiaGravityWave';
 Param.ProfVel='Const';
 Param.Damping=false;
 Param.Coriolis=false;
 Param.Buoyancy=true;
 Param.Source=false;
-Param.xc=Param.Lx/3;
+Param.xC=Param.Lx/3;
 Param.d=5000;
 Param.a=5*1.e3;
-Param.T0=250;
-Param.DeltaT=1.e-2;
+Param.Th0=300;
+Param.DeltaTh=1.e-2;
 Param.uMax=0;
 Param.vMax=0;
 Param.NBr=1.e-2;
@@ -67,7 +67,7 @@ Param.Thermo='';
 % Discretization
 OrdPolyZ=1;
 [CG,Param]=Discretization(Param.OrdPoly,OrdPolyZ,@JacobiDG3,Param);
-Param.HyperVisc=false;
+Param.HyperVisc=true;
 Param.HyperDCurl=2.e5; %1.e14*(dx/LRef)^3.2;
 Param.HyperDGrad=2.e5;
 Param.HyperDDiv=2.2e5;
@@ -75,27 +75,22 @@ Param.Upwind=false;
 
 % Output
 Param.Flat=false;
-Param.vtkFileName='BaldaufCart';
+Param.vtkFileName='InertiaGravityWave';
 Param.vtk=0;
 vtkGrid=vtkCGGrid(CG,@TransCart,@Topo,Param);
 Param.cNames(1).s='Rho';
 Param.cNames(2).s='u';
 Param.cNames(3).s='w';
 Param.cNames(4).s='Th';
-Param.cNames(5).s='TPrime';
+Param.cNames(5).s='ThetaPrime';
 Param.cNames(6).s='Pres';
 
-
-
-
 % Initial conditions
-
 U=zeros(CG.NumG,nz,Param.NumV);
 U(:,:,Param.RhoPos)=Project(@fRho,CG,Param);
 [U(:,:,Param.uPos),U(:,:,Param.vPos)]=ProjectVec(@fVel,CG,Param);
 U(:,:,Param.ThPos)=Project(@fTheta,CG,Param).*U(:,:,Param.RhoPos);
-Param.TBGrd=Project(@fTBGrd,CG,Param);
-Param.T=Project(@fT,CG,Param);
+Param.ThetaBGrd=Project(@fThetaBGrd,CG,Param);
 pBGrd=Project(@fpBGrd,CG,Param);
 RhoBGrd=Project(@fRhoBGrd,CG,Param);
 OP=Param.OrdPoly+1;
