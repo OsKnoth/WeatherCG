@@ -1,5 +1,5 @@
 function Rho = fRhoBGrd(x,Param)
-switch lower(Param.ProfRho)
+switch lower(Param.ProfRhoBGrd)
   case 'baldaufcart'
     delta=Param.Grav/(Param.Rd*Param.T0);
     p=Param.p0*exp(-delta*x(3));

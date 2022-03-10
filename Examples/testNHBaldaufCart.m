@@ -39,6 +39,8 @@ end
 
 % Model
 Param.ProfRho='BaldaufCart';
+Param.ProfRhoBGrd='BaldaufCart';
+Param.ProfpBGrd='BaldaufCart';
 Param.ProfTheta='BaldaufCart';
 Param.ProfVel='Const';
 Param.Damping=false;

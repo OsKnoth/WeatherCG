@@ -77,6 +77,10 @@ if strcmp(Param.ModelType,'Curl')
   end
   J.JThW=spdiags([reshape(-D,nJ,1) reshape(D,nJ,1)],[-1 0]...
     ,nJ,nJ);
+  if Param.Damping
+    K=permute(DampingKoeff(CG,Param),[2 1]);
+    J.JWW=spdiags(reshape(K,nJ,1),0,nJ,nJ);
+  end
 else
   % Conservative
   D=zeros(nz,nCol);

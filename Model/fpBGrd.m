@@ -1,5 +1,5 @@
 function p = fpBGrd(x,Param)
-switch lower(Param.ProfTheta)
+switch lower(Param.ProfpBGrd)
   case 'baldaufcart'
     delta=Param.Grav/(Param.Rd*Param.T0);
     

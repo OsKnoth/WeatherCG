@@ -27,15 +27,27 @@ FCG=zeros(OP,OP,NF,nz,Param.NumV);
 KE=0.5*(v1CG.*v1CG+v2CG.*v2CG+wCCG.*wCCG);
 FCG(:,:,:,:,RhoPos)=-FDiv3Vec(RhoCG,v1CG,v2CG,wCG,CG,Param);
 
-Param.Pres=Pressure(ThCG,RhoCG,KE,Param)-Param.pBGrd;
-FCG(:,:,:,:,uPos:wPos)=-FGrad3Vec(Param.Pres,CG,Param);
-FCG(:,:,:,:,uPos)=FCG(:,:,:,:,uPos)./RhoCG;
-FCG(:,:,:,:,vPos)=FCG(:,:,:,:,vPos)./RhoCG;
-if Param.Buoyancy
-  RhoF=0.5*(RhoCG(:,:,:,1:nz-1)+RhoCG(:,:,:,2:nz));
-  FCG(:,:,:,1:nz-1,wPos)=(FCG(:,:,:,1:nz-1,wPos)...
-    -Param.Grav*Param.JF(:,:,:,2:nz).*(RhoF-Param.RhoBGrdF))...
-    ./RhoF;
+if Param.RefProfile
+  Param.Pres=Pressure(ThCG,RhoCG,KE,Param)-Param.pBGrd;
+  FCG(:,:,:,:,uPos:wPos)=-FGrad3Vec(Param.Pres,CG,Param);
+  FCG(:,:,:,:,uPos)=FCG(:,:,:,:,uPos)./RhoCG;
+  FCG(:,:,:,:,vPos)=FCG(:,:,:,:,vPos)./RhoCG;
+  if Param.Buoyancy
+    RhoF=0.5*(RhoCG(:,:,:,1:nz-1)+RhoCG(:,:,:,2:nz));
+    FCG(:,:,:,1:nz-1,wPos)=(FCG(:,:,:,1:nz-1,wPos)...
+      -Param.Grav*Param.JF(:,:,:,2:nz).*(RhoF-Param.RhoBGrdF))...
+      ./RhoF;
+  end
+else
+  Param.Pres=Pressure(ThCG,RhoCG,KE,Param);
+  FCG(:,:,:,:,uPos:wPos)=-FGrad3Vec(Param.Pres,CG,Param);
+  FCG(:,:,:,:,uPos)=FCG(:,:,:,:,uPos)./RhoCG;
+  FCG(:,:,:,:,vPos)=FCG(:,:,:,:,vPos)./RhoCG;
+  if Param.Buoyancy
+    FCG(:,:,:,1:nz-1,wPos)=FCG(:,:,:,1:nz-1,wPos)...
+      ./(0.5*(RhoCG(:,:,:,1:nz-1)+RhoCG(:,:,:,2:nz)))...
+      -Param.Grav*Param.JF(:,:,:,2:nz);
+  end
 end
 FCG(:,:,:,:,uPos:wPos)=FCG(:,:,:,:,uPos:wPos)-FGrad3Vec(KE,CG,Param);
 FCG(:,:,:,:,uPos:wPos)=FCG(:,:,:,:,uPos:wPos)...

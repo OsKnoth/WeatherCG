@@ -1,6 +1,6 @@
-function V=RosenbrockSchur(V,dt,Fcn,Jac,CG,Param)
+function V=RosenbrockSchur1(V,dt,Fcn,Jac,CG,Param)
 Vn=V;
-ROS=Param.ROS;
+ROS=Param.ROS1;
 nV1=size(V,1);
 nV2=size(V,2);
 nV3=size(V,3);
@@ -18,7 +18,7 @@ if ROS.transformed
     for jStage=1:iStage-1
       fV=fV+(ROS.c(iStage,jStage)/dt)*k(:,:,:,jStage);
     end
-    k(:,:,:,iStage)=SchurSolve(fV,JS,dt*ROS.d,Param);
+    k(:,:,:,iStage)=SchurSolve(fV,JS,dt*ROS.d);
   end
   V=Vn;
   for iStage=1:nStage
@@ -41,7 +41,7 @@ else
     end
     if ROS.Gamma(iStage,iStage)>0
       fV=fV/ROS.Gamma(iStage,iStage);
-      k(:,:,:,iStage)=SchurSolve(fV,JS,dt*ROS.Gamma(iStage,iStage),Param);
+      k(:,:,:,iStage)=SchurSolve(fV,JS,dt*ROS.Gamma(iStage,iStage));
     else
       k(:,:,:,iStage)=dt*fV;
     end

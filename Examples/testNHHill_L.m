@@ -1,4 +1,4 @@
-function testNHHill_M()
+function testNHHill_L()
 close all
 clear all
 
@@ -43,7 +43,7 @@ Param.Thermo='';
 Param.Source=false;
 Param.HyperD=0; %1.e15*(nx/30)^3.2;
 Param.StrideDamp=6000;
-Param.Relax=1.e-1;
+Param.Relax=1.e-3; %1.e-1;
 Param.Damping=true;
 Param.Flat=false;
 Param.Coriolis=false;
@@ -77,6 +77,7 @@ U=zeros(CG.NumG,nz,Param.NumV);
 Param.ProfRho='GravityHill';
 Param.ProfTheta='GravityHill';
 Param.ProfVel='Const';
+Param.RefProfile=false;
 Param.RhoPos=1;
 Param.uPos=2;
 Param.vPos=3;
@@ -86,27 +87,23 @@ U(:,:,Param.RhoPos)=Project(@fRho,CG,Param);
 [U(:,:,Param.uPos),U(:,:,Param.vPos)]=ProjectVec(@fVel,CG,Param);
 U(:,:,Param.ThPos)=Project(@fTheta,CG,Param).*U(:,:,Param.RhoPos);
 
+
 % Output
-Slice.Type='XZ';
-Slice.y=y0+ly/ny/2;
-Slice.iy=1;
-Param.SliceXZ=Slice;
-Param.SliceXY.Type='XY';
-Param.SliceXY.iz=1;
-Param.fig=1;
-Param.vtk=0;
+Param.Flat=false;
 Param.vtkFileName='Hill_L';
 Param.vtk=0;
 vtkGrid=vtkCGGrid(CG,@TransCart,@Topo,Param);
 Param.cNames(1).s='u';
 Param.cNames(2).s='w';
-cOut=zeros(CG.NumG,nz,2);
+Param.cNames(3).s='Th';
+Param.cNames(4).s='Rho';
+
 
 
 IntMethod='Rosenbrock';
 %IntMethod='RungeKutta';
 if strcmp(IntMethod,'Rosenbrock')
-  dtau=30;
+  dtau=20;
 else
   dtau=.4;
 end
@@ -114,19 +111,19 @@ nIter=6000;
 %v = VideoWriter ('Galewsky.avi');
 %open (v);
 Param.RK=RungeKuttaMethod('RK4');
-Param.ROS=RosenbrockMethod('ROSRK3');
+Param.ROSRK3=RosenbrockMethod('ROSRK3');
+Param.ROS=RosenbrockMethod('TROSWLASSP3P4S2C');
+%Param.ROS=RosenbrockMethod('RODAS_N');
+Param.ROS=RosenbrockMethod('RK3_H');
 CFL=0.125;
 time=0;
 Param.EndTime=216000;
 nIter=Param.EndTime/dtau;
 PrintTime=10000;
 PrintInt=floor(PrintTime/dtau);
-cOut(:,:,1)=U(:,:,Param.uPos);
-W=BoundaryWOutput(U,CG,Param);
-cOut(:,1,2)=W;
-cOut(:,2:nz-1,2)=0.5*(U(:,1:nz-2,Param.wPos)+U(:,2:nz-1,Param.wPos));
-cOut(:,nz,2)=0.5*U(:,nz-1,Param.wPos);
-Param.vtk=vtkCG(cOut,CG,Param,vtkGrid,Param.vtk);
+PrintInt=100;
+Param.vtk=vtkOutput(U,vtkGrid,CG,Param);
+nIter=1000;
 switch IntMethod
   case 'Rosenbrock'
     tic
@@ -135,12 +132,7 @@ switch IntMethod
       U=RosenbrockSchur(U,dtau,@FcnNHCurlVec,@JacSchur,CG,Param);
       time=time+dtau;
       if mod(i,PrintInt)==0
-        cOut(:,:,1)=U(:,:,Param.uPos);
-        W=BoundaryWOutput(U,CG,Param);
-        cOut(:,1,2)=W;
-        cOut(:,2:nz-1,2)=0.5*(U(:,1:nz-2,Param.wPos)+U(:,2:nz-1,Param.wPos));
-        cOut(:,nz,2)=0.5*U(:,nz-1,Param.wPos);
-        Param.vtk=vtkCG(cOut,CG,Param,vtkGrid,Param.vtk);
+        Param.vtk=vtkOutput(U,vtkGrid,CG,Param);
       end
     end
     toc
@@ -150,12 +142,7 @@ switch IntMethod
       U=RungeKuttaExplicit(U,dtau,@FcnNHCurlVec,CG,Param);
       time=time+dtau;
       if mod(i,PrintInt)==0
-        cOut(:,:,1)=U(:,:,Param.uPos);
-        W=BoundaryWOutput(U,CG,Param);
-        cOut(:,1,2)=0.5*(U(:,1,Param.wPos)+W);
-        cOut(:,2:nz-1,2)=0.5*(U(:,1:nz-2,Param.wPos)+U(:,2:nz-1,Param.wPos));
-        cOut(:,nz,2)=0.5*U(:,nz-1,Param.wPos);
-        Param.vtk=vtkCG(cOut,CG,Param,vtkGrid,Param.vtk);
+        Param.vtk=vtkOutput(U,vtkGrid,CG,Param);
       end
     end
 end
